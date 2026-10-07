@@ -258,6 +258,18 @@
       background: #000;
     }
 
+    .drive-action-blocker {
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: 4;
+      width: 176px;
+      height: 66px;
+      background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.94) 32%, #000 100%);
+      cursor: not-allowed;
+      pointer-events: auto;
+    }
+
     .watermarks {
       position: absolute;
       inset: -13%;
@@ -382,6 +394,7 @@
       .details { grid-template-columns: 1fr; gap: 14px; padding: 17px 18px 20px; }
       .session { padding-left: 40px; text-align: left; white-space: normal; }
       .watermarks { grid-template-columns: repeat(2, 1fr); }
+      .drive-action-blocker { width: 132px; height: 58px; }
       .login-card { padding: 25px 20px; }
     }
 
@@ -442,8 +455,11 @@
             data-src="https://drive.google.com/file/d/1p9SN_paB5P6HGidI5-oNJmnh_LKAEF76/preview"
             src="about:blank"
             allow="autoplay; encrypted-media; fullscreen 'none'; display-capture 'none'"
+            sandbox="allow-scripts allow-same-origin allow-forms"
             referrerpolicy="strict-origin-when-cross-origin"
           ></iframe>
+
+          <div class="drive-action-blocker" aria-hidden="true" title="Externes Öffnen ist deaktiviert"></div>
 
           <div class="watermarks" id="watermarks" aria-hidden="true">
             <span></span><span></span><span></span>
