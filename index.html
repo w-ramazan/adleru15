@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta http-equiv="Permissions-Policy" content="display-capture=(); fullscreen=()">
+  <title>Adler Dellbrück U15 · Geschütztes Video</title>
+  <style>
+    :root {
+      --night: #020b1d;
+      --panel: #071a38;
+      --panel-soft: #0b244d;
+      --blue: #1769e0;
+      --blue-light: #59a5ff;
+      --blue-deep: #0646a5;
+      --line: rgba(144, 191, 255, 0.2);
+      --text: #f6f9ff;
+      --muted: #9cb3d2;
+      --danger: #ff8d94;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(23, 105, 224, 0.32), transparent 31rem),
+        radial-gradient(circle at 95% 92%, rgba(89, 165, 255, 0.16), transparent 28rem),
+        var(--night);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body.locked { overflow: hidden; }
+
+    button, input, video { font: inherit; -webkit-tap-highlight-color: transparent; }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(89, 165, 255, 0.55);
+      outline-offset: 2px;
+    }
+
+    .access-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(23, 105, 224, 0.34), transparent 38rem),
+        rgba(2, 11, 29, 0.98);
+    }
+
+    .access-gate[hidden] { display: none; }
+
+    .login-card {
+      width: min(430px, 100%);
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(11, 36, 77, 0.98), rgba(5, 20, 46, 0.98));
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+    }
+
+    .login-logo {
+      display: block;
+      width: 92px;
+      height: 92px;
+      margin: 0 auto 18px;
+      border: 4px solid rgba(255, 255, 255, 0.92);
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 14px 38px rgba(0, 55, 145, 0.42);
+      object-fit: cover;
+    }
+
+    .login-card h1 {
+      margin: 0;
+      font-size: clamp(1.65rem, 7vw, 2.2rem);
+      line-height: 1.05;
+      letter-spacing: -0.045em;
+      text-align: center;
+    }
+
+    .login-lead {
+      margin: 10px 0 24px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    .field { display: block; margin-top: 15px; }
+
+    .field span {
+      display: block;
+      margin-bottom: 7px;
+      color: #c7d8ee;
+      font-size: 0.76rem;
+      font-weight: 750;
+      letter-spacing: 0.04em;
+    }
+
+    .field input {
+      width: 100%;
+      height: 48px;
+      padding: 0 14px;
+      border: 1px solid rgba(144, 191, 255, 0.28);
+      border-radius: 11px;
+      background: rgba(1, 10, 27, 0.68);
+      color: var(--text);
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .field input::placeholder { color: #667f9f; }
+
+    .login-button {
+      width: 100%;
+      min-height: 49px;
+      margin-top: 21px;
+      border: 0;
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--blue-light), var(--blue));
+      box-shadow: 0 12px 30px rgba(23, 105, 224, 0.32);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 850;
+    }
+
+    .login-button:hover { filter: brightness(1.08); }
+
+    .login-error {
+      min-height: 20px;
+      margin: 10px 0 0;
+      color: var(--danger);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 30px 0 44px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 13px; }
+
+    .crest {
+      width: 56px;
+      height: 56px;
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(0, 76, 190, 0.35);
+      object-fit: cover;
+    }
+
+    .brand-copy strong,
+    .brand-copy span { display: block; }
+
+    .brand-copy strong { font-size: 1rem; letter-spacing: 0.01em; }
+
+    .brand-copy span {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .status::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--blue-light);
+      box-shadow: 0 0 13px var(--blue-light);
+      content: "";
+    }
+
+    main {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(7, 26, 56, 0.92);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+    }
+
+    .heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 26px 28px 22px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--blue-light);
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+    }
+
+    .video-title {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(1.55rem, 4vw, 2.7rem);
+      line-height: 1.05;
+      letter-spacing: -0.045em;
+    }
+
+    .match-date { flex: 0 0 auto; color: var(--muted); font-size: 0.85rem; }
+
+    .player-wrap { border-block: 1px solid var(--line); background: #000; }
+
+    .player-shell {
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      isolation: isolate;
+    }
+
+    .drive-player {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
+    .watermarks {
+      position: absolute;
+      inset: -13%;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-content: space-around;
+      gap: 14%;
+      pointer-events: none;
+      transform: rotate(-17deg);
+    }
+
+    .watermarks span {
+      color: rgba(255, 255, 255, 0.2);
+      font-size: clamp(0.53rem, 1.2vw, 0.82rem);
+      font-weight: 850;
+      letter-spacing: 0.1em;
+      text-align: center;
+      text-shadow: 0 1px 5px #000;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .privacy-shield {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #020817;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease;
+    }
+
+    .privacy-shield.active { opacity: 1; pointer-events: auto; }
+
+    .shield-copy { max-width: 460px; text-align: center; }
+    .shield-copy b { display: block; margin-bottom: 8px; font-size: clamp(1rem, 3vw, 1.45rem); }
+    .shield-copy span { color: var(--muted); font-size: 0.88rem; }
+
+    .stream-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 48px;
+      padding: 10px 18px;
+      background: linear-gradient(180deg, #0b234a, #061733);
+      color: #bfd0e7;
+      font-size: 0.72rem;
+    }
+
+    .no-fullscreen {
+      padding: 7px 10px;
+      border: 1px solid rgba(144, 191, 255, 0.17);
+      border-radius: 8px;
+      color: #849ab8;
+      font-size: 0.66rem;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 24px;
+      padding: 20px 28px 24px;
+    }
+
+    .notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.55;
+    }
+
+    .notice-icon {
+      display: grid;
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border: 1px solid rgba(89, 165, 255, 0.34);
+      border-radius: 8px;
+      background: rgba(89, 165, 255, 0.1);
+      color: var(--blue-light);
+      font-size: 0.85rem;
+      font-weight: 900;
+    }
+
+    .session {
+      color: rgba(255, 255, 255, 0.4);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.67rem;
+      letter-spacing: 0.05em;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .browser-note {
+      margin: 16px 4px 0;
+      color: rgba(190, 211, 239, 0.5);
+      font-size: 0.72rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    @media (max-width: 700px) {
+      .page { width: min(100% - 20px, 1120px); padding-top: 18px; }
+      .topbar { margin-bottom: 16px; }
+      .status { display: none; }
+      main { border-radius: 17px; }
+      .heading { display: block; padding: 21px 18px 17px; }
+      .match-date { margin-top: 10px; }
+      .stream-bar { padding-inline: 12px; }
+      .details { grid-template-columns: 1fr; gap: 14px; padding: 17px 18px 20px; }
+      .session { padding-left: 40px; text-align: left; white-space: normal; }
+      .watermarks { grid-template-columns: repeat(2, 1fr); }
+      .login-card { padding: 25px 20px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body class="locked" oncontextmenu="return false">
+  <section class="access-gate" id="accessGate" aria-labelledby="loginTitle">
+    <form class="login-card" id="loginForm" autocomplete="off">
+      <img class="login-logo" src="images-2.png" alt="SV Adler Dellbrück e.V. Logo" draggable="false">
+      <h1 id="loginTitle">Geschützter Videobereich</h1>
+      <p class="login-lead">Bitte identifiziere dich. Dein Name wird als persönliches Wasserzeichen eingeblendet.</p>
+
+      <label class="field">
+        <span>Vor- und Nachname</span>
+        <input id="viewerName" name="name" type="text" placeholder="Max Mustermann" maxlength="60" required autocomplete="name">
+      </label>
+
+      <label class="field">
+        <span>Zugangscode</span>
+        <input id="accessCode" name="code" type="password" placeholder="Zugangscode eingeben" required autocomplete="current-password">
+      </label>
+
+      <button class="login-button" type="submit">Video freischalten</button>
+      <p class="login-error" id="loginError" role="alert" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <div class="page" id="videoPage" aria-hidden="true">
+    <header class="topbar">
+      <div class="brand" aria-label="Adler Dellbrück U15">
+        <img class="crest" src="images-2.png" alt="SV Adler Dellbrück e.V. Logo" draggable="false">
+        <div class="brand-copy">
+          <strong>Adler Dellbrück</strong>
+          <span>U15 Videoportal</span>
+        </div>
+      </div>
+      <div class="status" id="viewerLabel">Geschützter Bereich</div>
+    </header>
+
+    <main>
+      <section class="heading" aria-labelledby="video-title">
+        <div>
+          <p class="eyebrow">Spielaufzeichnung · U15</p>
+          <h2 class="video-title" id="video-title">Adler Dellbrück gegen Olympia</h2>
+        </div>
+        <div class="match-date">03. Oktober 2026</div>
+      </section>
+
+      <section class="player-wrap" aria-label="Videoplayer ohne Vollbildfunktion">
+        <div class="player-shell" id="playerShell">
+          <iframe
+            class="drive-player"
+            id="drivePlayer"
+            title="Spiel Adler Dellbrück U15 gegen Olympia"
+            data-src="https://drive.google.com/file/d/1p9SN_paB5P6HGidI5-oNJmnh_LKAEF76/preview"
+            src="about:blank"
+            allow="autoplay; encrypted-media; fullscreen 'none'; display-capture 'none'"
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+
+          <div class="watermarks" id="watermarks" aria-hidden="true">
+            <span></span><span></span><span></span>
+            <span></span><span></span><span></span>
+            <span></span><span></span><span></span>
+          </div>
+
+          <div class="privacy-shield" id="privacyShield" aria-hidden="true">
+            <div class="shield-copy">
+              <b>Wiedergabe geschützt</b>
+              <span>Bitte kehre zum Videofenster zurück, um die Wiedergabe fortzusetzen.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stream-bar" aria-label="Streaming-Information">
+          <span>Video wird geschützt über Google Drive geladen</span>
+          <span class="no-fullscreen">Vollbild gesperrt</span>
+        </div>
+      </section>
+
+      <section class="details" aria-label="Nutzungshinweis">
+        <p class="notice">
+          <span class="notice-icon" aria-hidden="true">!</span>
+          <span>Nur für den internen Gebrauch. Screenshots, Bildschirmaufnahmen, Downloads und Weitergabe sind nicht gestattet. Persönliches Wasserzeichen aktiv.</span>
+        </p>
+        <div class="session" id="sessionId" aria-label="Sitzungskennung"></div>
+      </section>
+    </main>
+
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      // Bei Bedarf hier den lokalen Zugangscode ändern.
+      const ACCESS_CODE = "ADLER-U15";
+      const gate = document.getElementById("accessGate");
+      const form = document.getElementById("loginForm");
+      const nameInput = document.getElementById("viewerName");
+      const codeInput = document.getElementById("accessCode");
+      const loginError = document.getElementById("loginError");
+      const page = document.getElementById("videoPage");
+      const drivePlayer = document.getElementById("drivePlayer");
+      const shield = document.getElementById("privacyShield");
+      const watermarks = [...document.querySelectorAll("#watermarks span")];
+      const sessionLabel = document.getElementById("sessionId");
+      const viewerLabel = document.getElementById("viewerLabel");
+      const sessionId = `ADU15-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+      let authorized = false;
+
+      sessionLabel.textContent = `Sitzung: ${sessionId}`;
+
+      function cleanName(value) {
+        return value.replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 60);
+      }
+
+      function setPersonalWatermark(name) {
+        const personal = `${name} · ${sessionId}`;
+        watermarks.forEach((mark, index) => {
+          mark.textContent = index % 3 === 1 ? "Adler Dellbrück U15 · Keine Weitergabe" : personal;
+        });
+      }
+
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        const name = cleanName(nameInput.value);
+
+        if (!name) {
+          loginError.textContent = "Bitte gib deinen Namen ein.";
+          nameInput.focus();
+          return;
+        }
+
+        if (codeInput.value !== ACCESS_CODE) {
+          loginError.textContent = "Der Zugangscode ist nicht korrekt.";
+          codeInput.value = "";
+          codeInput.focus();
+          return;
+        }
+
+        authorized = true;
+        setPersonalWatermark(name);
+        viewerLabel.textContent = `Angemeldet: ${name}`;
+        gate.hidden = true;
+        page.setAttribute("aria-hidden", "false");
+        document.body.classList.remove("locked");
+        drivePlayer.src = drivePlayer.dataset.src;
+      });
+
+      function showShield() {
+        if (!authorized) return;
+        shield.classList.add("active");
+        shield.setAttribute("aria-hidden", "false");
+      }
+
+      function hideShield() {
+        shield.classList.remove("active");
+        shield.setAttribute("aria-hidden", "true");
+      }
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) showShield();
+        else hideShield();
+      });
+
+      window.addEventListener("blur", showShield);
+      window.addEventListener("focus", hideShield);
+
+      async function leaveFullscreen() {
+        try {
+          if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
+          if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+        } catch (_) {}
+      }
+
+      document.addEventListener("fullscreenchange", leaveFullscreen);
+      document.addEventListener("webkitfullscreenchange", leaveFullscreen);
+      document.addEventListener("dragstart", event => event.preventDefault());
+      document.addEventListener("copy", event => event.preventDefault());
+      document.addEventListener("cut", event => event.preventDefault());
+
+      document.addEventListener("keydown", event => {
+        const key = event.key.toLowerCase();
+        const blockedShortcut =
+          event.key === "PrintScreen" ||
+          event.key === "F11" ||
+          ((event.ctrlKey || event.metaKey) && ["s", "u", "p"].includes(key)) ||
+          (event.metaKey && event.shiftKey && ["3", "4", "5"].includes(key));
+
+        if (blockedShortcut) {
+          event.preventDefault();
+          leaveFullscreen();
+          showShield();
+          window.setTimeout(hideShield, 1400);
+        }
+
+      }, true);
+
+      // Verhindert, dass Skripte innerhalb dieser Seite eine Bildschirmaufnahme starten.
+      if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+        try {
+          Object.defineProperty(navigator.mediaDevices, "getDisplayMedia", {
+            configurable: false,
+            writable: false,
+            value: () => Promise.reject(new DOMException("Bildschirmaufnahme ist deaktiviert.", "NotAllowedError"))
+          });
+        } catch (_) {}
+      }
+
+    })();
+  </script>
+</body>
+</html>
