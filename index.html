@@ -510,6 +510,7 @@
       const sessionLabel = document.getElementById("sessionId");
       const viewerLabel = document.getElementById("viewerLabel");
       const sessionId = `ADU15-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+      const touchDevice = window.matchMedia("(pointer: coarse)").matches;
       let authorized = false;
 
       sessionLabel.textContent = `Sitzung: ${sessionId}`;
@@ -567,8 +568,20 @@
         else hideShield();
       });
 
-      window.addEventListener("blur", showShield);
+      window.addEventListener("blur", () => {
+        // Mobile Browser und eingebettete Player lösen beim Antippen häufig ein
+        // blur-Ereignis aus, obwohl die Seite weiterhin sichtbar ist.
+        if (touchDevice) return;
+
+        window.setTimeout(() => {
+          if (document.hidden) showShield();
+          else if (document.activeElement === drivePlayer) hideShield();
+          else showShield();
+        }, 150);
+      });
       window.addEventListener("focus", hideShield);
+      window.addEventListener("pageshow", hideShield);
+      drivePlayer.addEventListener("load", hideShield);
 
       async function leaveFullscreen() {
         try {
